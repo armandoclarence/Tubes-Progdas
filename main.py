@@ -429,7 +429,6 @@ def kalkulator_sewa():
     lanjut_input = True
 
     while lanjut_input == True:
-        # MENAMPILKAN DAFTAR MOTOR SEBELUM INPUT
         print("\n============================================================")
         print("                 DAFTAR MOTOR YANG TERSEDIA                 ")
         print("============================================================")
@@ -523,7 +522,6 @@ def akhir_hari():
 
     while i < banyak_transaksi:
         sewa = data_sewa_hari_ini[i]
-        # Menggabungkan Merek + Model untuk tampilan ringkas (Contoh: Honda Beat)
         motor_teks = sewa[1] + " " + sewa[2]
         
         print(f"{i + 1:<4} | {sewa[0]:<15} | {motor_teks:<25} | {sewa[3]:<2} hari | Rp{sewa[4]:<10}")
