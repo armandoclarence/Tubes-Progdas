@@ -26,7 +26,11 @@ data_motor = [
     ["BMW", "F 900 XR", 900, "Kopling"]
 ]
 
-BANYAK_DATA = 25 
+BANYAK_DATA = 25
+
+# Menyimpan log transaksi harian dengan format: [Nama Penyewa, Merek Motor, Model Motor, Durasi Hari, Total Biaya]
+data_sewa_hari_ini = [None] * 100 
+banyak_transaksi = 0
 
 # # Kamus Data FUNGSI: upper & lower
 # - huruf_kecil / huruf_besar (String): Kamus karakter untuk konversi teks manual.
@@ -407,81 +411,142 @@ def cari_motor():
     input("\nTekan Enter untuk kembali...")
 
 # # Kamus Data FUNGSI: kalkulator_sewa
+# - nama_penyewa (String): Input nama identitas pelanggan yang ingin menyewa.
 # - nama_motor (String): Input nama model motor spesifik yang hendak disewa.
 # - ditemukan (Boolean): Penanda konfirmasi ketepatan nama motor di database.
 # - harga (Integer): Besaran rate nominal rental per hari berlandaskan CC dan jenis transmisi.
 # - i (Integer): Penunjuk urutan indeks pencarian data dalam loop.
+# - indeks_tampil (Integer): Indeks untuk mencetak daftar motor ke layar sebelum input.
 # - cc (Integer): Kapasitas mesin silinder dari motor aktif yang ditemukan di database.
 # - transmisi_aktif (String): Menyimpan jenis transmisi dari motor aktif yang ditemukan.
 # - hari (Integer): Jumlah kuantitas hari peminjaman motor oleh customer.
 # - total (Integer): Akumulasi kalkulasi finansial (harga x hari).
+# - lanjut_input (Boolean): Pengendali loop untuk menambah banyak penyewa berturut-turut.
+# - konfirmasi (String): Menyimpan input keputusan user untuk lanjut sewa atau berhenti (Y/T).
+# - banyak_transaksi (Global Integer): Indeks konter jumlah manifes log sewa harian.
 def kalkulator_sewa():
-    nama_motor = input("\nMasukkan motor yang ingin disewa: ")
-    ditemukan = False
-    harga = 0
+    global banyak_transaksi
+    lanjut_input = True
+
+    while lanjut_input == True:
+        # MENAMPILKAN DAFTAR MOTOR SEBELUM INPUT
+        print("\n============================================================")
+        print("                 DAFTAR MOTOR YANG TERSEDIA                 ")
+        print("============================================================")
+        print(f"{'No':<4} | {'Merek':<12} | {'Model':<18} | {'CC':<5} | {'Transmisi':<10}")
+        print("-" * 60)
+        indeks_tampil = 0
+        while indeks_tampil < BANYAK_DATA:
+            print(f"{indeks_tampil + 1:<4} | {data_motor[indeks_tampil][0]:<12} | {data_motor[indeks_tampil][1]:<18} | {data_motor[indeks_tampil][2]:<5} | {data_motor[indeks_tampil][3]:<10}")
+            indeks_tampil += 1
+        print("============================================================")
+
+        nama_penyewa = input("\nMasukkan Nama Penyewa: ")
+        nama_motor = input("Masukkan motor yang ingin disewa (Ketik Modelnya): ")
+        ditemukan = False
+        harga = 0
+        i = 0
+
+        while i < BANYAK_DATA:
+            if lower(nama_motor) == lower(data_motor[i][1]):
+                ditemukan = True
+                cc = data_motor[i][2]
+                transmisi_aktif = lower(data_motor[i][3])
+
+                if transmisi_aktif == "matik":
+                    if cc <= 125:
+                        harga = 70000
+                    elif cc <= 160:
+                        harga = 100000
+                    else:
+                        harga = 250000  
+
+                elif transmisi_aktif == "manual":
+                    harga = 45000  
+
+                elif transmisi_aktif == "kopling":
+                    if cc <= 150:
+                        harga = 120000
+                    elif cc <= 250:
+                        harga = 450000
+                    elif cc <= 600:
+                        harga = 2000000
+                    elif cc <= 1000:
+                        harga = 2000000
+                    else:
+                        harga = 1600000  
+
+                print("\nMotor ditemukan!")
+                print("Merek          :", data_motor[i][0])
+                print("Model          :", data_motor[i][1])
+                print("Harga per hari : Rp", harga)
+                
+                merek_terpilih = data_motor[i][0]
+                model_terpilih = data_motor[i][1]
+                i = BANYAK_DATA  
+            else:
+                i += 1
+
+        if ditemukan == False:
+            print("Motor tidak ditemukan.")
+        else:
+            hari = int(input("Berapa hari ingin menyewa? "))
+            total = harga * hari
+
+            print("\n=== ESTIMASI BIAYA ===")
+            print("Nama Penyewa   :", nama_penyewa)
+            print("Harga per hari : Rp", harga)
+            print("Durasi         :", hari, "hari")
+            print("Total biaya    : Rp", total)
+
+            data_sewa_hari_ini[banyak_transaksi] = [nama_penyewa, merek_terpilih, model_terpilih, hari, total]
+            banyak_transaksi += 1
+            print("\n[SUKSES] Transaksi sewa berhasil dicatat!")
+
+        konfirmasi = input("\nApakah ingin menambah data penyewa lagi? (y/t): ")
+        if lower(konfirmasi) == "t":
+            lanjut_input = False
+
+# # Kamus Data FUNGSI: akhir_hari
+# - total_pendapatan (Integer): Akumulasi dari seluruh omzet biaya sewa masuk hari ini.
+# - i (Integer): Iterator indeks penelusur daftar manifes transaksi sewa harian.
+# - sewa (List): Menyimpan sub-list data satu transaksi aktif saat dibongkar.
+def akhir_hari():
+    print("\n=========================================================================")
+    print("                     LAPORAN REKAPITULASI AKHIR HARI                     ")
+    print("=========================================================================")
+    print(f"{'No':<4} | {'Nama Penyewa':<15} | {'Motor yang Disewa':<25} | {'Durasi':<7} | {'Total Biaya':<12}")
+    print("-" * 73)
+
+    total_pendapatan = 0
     i = 0
 
-    while i < BANYAK_DATA:
-        if lower(nama_motor) == lower(data_motor[i][1]):
-            ditemukan = True
-            cc = data_motor[i][2]
-            transmisi_aktif = lower(data_motor[i][3])
+    while i < banyak_transaksi:
+        sewa = data_sewa_hari_ini[i]
+        # Menggabungkan Merek + Model untuk tampilan ringkas (Contoh: Honda Beat)
+        motor_teks = sewa[1] + " " + sewa[2]
+        
+        print(f"{i + 1:<4} | {sewa[0]:<15} | {motor_teks:<25} | {sewa[3]:<2} hari | Rp{sewa[4]:<10}")
+        total_pendapatan += sewa[4]
+        i += 1
 
-            # 1. LOGIKA UNTUK MOTOR MATIK
-            if transmisi_aktif == "matik":
-                if cc <= 125:
-                    harga = 70000
-                elif cc <= 160:
-                    harga = 100000
-                else:
-                    harga = 250000  # Untuk Matik 250cc ke atas
-
-            # 2. LOGIKA UNTUK MOTOR MANUAL (BEBEK)
-            elif transmisi_aktif == "manual":
-                harga = 45000  # Rata-rata tarif motor bebek
-
-            # 3. LOGIKA UNTUK MOTOR KOPLING
-            elif transmisi_aktif == "kopling":
-                if cc <= 150:
-                    harga = 120000
-                elif cc <= 250:
-                    harga = 450000
-                elif cc <= 600:
-                    harga = 2000000
-                elif cc <= 1000:
-                    harga = 2000000
-                else:
-                    harga = 1600000  # Untuk Moge super besar > 1000cc
-
-            print("\nMotor ditemukan!")
-            print("Merek          :", data_motor[i][0])
-            print("Model          :", data_motor[i][1])
-            print("Harga per hari : Rp", harga)
-            
-            i = BANYAK_DATA  # Keluar dari loop jika sudah ketemu
-        else:
-            i += 1
-
-    if ditemukan == False:
-        print("Motor tidak ditemukan.")
-        input("\nTekan Enter untuk kembali...")
-        return
-
-    hari = int(input("Berapa hari ingin menyewa? "))
-    total = harga * hari
-
-    print("\n=== ESTIMASI BIAYA ===")
-    print("Harga per hari : Rp", harga)
-    print("Durasi         :", hari, "hari")
-    print("Total biaya    : Rp", total)
-
+    if banyak_transaksi == 0:
+        print(" Belum ada transaksi penyewaan yang tercatat untuk hari ini.")
+        
+    print("-" * 73)
+    print(f" TOTAL PENYEWA AKTIF HARI INI : {banyak_transaksi} Orang")
+    print(f" TOTAL OMZET PENDAPATAN HARI INI : Rp {total_pendapatan}")
+    print("=========================================================================")
+    
     input("\nTekan Enter untuk kembali...")
 
 # # Kamus Data/VARIABEL GLOBAL UTAMA:
 # 1. data_motor (List of Lists): Matriks dataset utama berisi [Merek, Model, CC, Transmisi].
 # 2. BANYAK_DATA (Integer): Batas acuan total baris data untuk perulangan di seluruh program.
-# 3. aplikasi_selesai (Boolean): Pengendali utama siklus hidup jalannya program utama.
-# 4. menu_pilihan (String): Menyimpan angka input respons pemilihan menu (1-5) dari user.
+# 3. data_sewa_hari_ini (List of Lists): Kumpulan log riwayat sewa motor harian dari multi-user.
+# 4. banyak_transaksi (Integer): Counter jumlah orang/transaksi sewa yang sukses tersimpan.
+# 5. aplikasi_selesai (Boolean): Pengendali utama siklus hidup jalannya program utama.
+# 6. menu_pilihan (String): Menyimpan angka input respons pemilihan menu (1-5) dari user.
 def menu_utama():
     aplikasi_selesai = False
 
@@ -492,11 +557,12 @@ def menu_utama():
         print("1. Filter Berdasarkan Daftar Merek")
         print("2. Filter Berdasarkan Daftar CC")
         print("3. Cari Motor")
-        print("4. Kalkulator Biaya Sewa")
-        print("5. Keluar Aplikasi")
+        print("4. Input Sewa Motor Baru")
+        print("5. Laporan Akhir Hari")
+        print("6. Keluar Aplikasi")
         print("======================================")
 
-        menu_pilihan = input("Pilih menu utama (1-5): ")
+        menu_pilihan = input("Pilih menu utama (1-6): ")
         
         if menu_pilihan == "1":
             menu_filter_merek()
@@ -507,10 +573,12 @@ def menu_utama():
         elif menu_pilihan == "4":
             kalkulator_sewa()
         elif menu_pilihan == "5":
+            akhir_hari()
+        elif menu_pilihan == "6":
             print("\nTerima kasih! Sampai jumpa kembali. 😉")
             aplikasi_selesai = True 
         else:
             print("\nPilihan tidak valid! Masukkan angka yang benar.")
 
 if __name__ == "__main__":
-    menu_utama()    
+    menu_utama()
